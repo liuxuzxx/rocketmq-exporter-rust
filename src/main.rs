@@ -1,3 +1,3 @@
 fn main() {
-    println!("Hello, world!");
+    println!("RocketMQ Exporter rust start...!");
 }
