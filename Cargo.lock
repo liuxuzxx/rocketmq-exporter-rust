@@ -204,6 +204,7 @@ dependencies = [
 name = "rocketmq-exporter-rust"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "serde",
  "serde_json",
  "tokio",
