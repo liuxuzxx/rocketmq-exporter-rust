@@ -7,7 +7,7 @@ use tokio::{
     net::TcpStream,
 };
 
-use crate::frame::Frame;
+use crate::{cmd::command::Command, frame::Frame};
 
 #[derive(Debug)]
 pub struct Connection {
@@ -63,8 +63,9 @@ impl Connection {
         println!(
             "read data from server:{} content is:{:?}",
             count,
-            &self.buffer[..]
+            String::from_utf8_lossy(&self.buffer[..])
         );
+        Command::parse(&self.buffer);
         Ok(())
     }
 }
