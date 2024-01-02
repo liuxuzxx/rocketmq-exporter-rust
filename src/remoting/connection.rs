@@ -7,7 +7,7 @@ use tokio::{
     net::TcpStream,
 };
 
-use crate::{cmd::command::Command, frame::Frame};
+use crate::{cmd::command::RemotingCommand, frame::Frame};
 
 #[derive(Debug)]
 pub struct Connection {
@@ -65,7 +65,8 @@ impl Connection {
             count,
             String::from_utf8_lossy(&self.buffer[..])
         );
-        Command::parse(&self.buffer);
+        let response = RemotingCommand::parse(&self.buffer);
+        println!("RocketMQ response:{}", response);
         Ok(())
     }
 }
