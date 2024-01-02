@@ -1,8 +1,9 @@
 use std::io;
 
 use bytes::BytesMut;
+use serde::de::value::Error;
 use tokio::{
-    io::{AsyncWriteExt, BufWriter},
+    io::{AsyncReadExt, AsyncWriteExt, BufWriter},
     net::TcpStream,
 };
 
@@ -47,6 +48,23 @@ impl Connection {
             }
             Frame::Array(_val) => unreachable!(),
         }
+        Ok(())
+    }
+
+    pub async fn write_bytes(&mut self, buffer: BytesMut) -> io::Result<()> {
+        let result = self.stream.write(&buffer).await?;
+        println!("send data size:{}", result);
+        self.stream.flush().await?;
+        Ok(())
+    }
+
+    pub async fn read_response(&mut self) -> io::Result<()> {
+        let count = self.stream.read_buf(&mut self.buffer).await?;
+        println!(
+            "read data from server:{} content is:{:?}",
+            count,
+            &self.buffer[..]
+        );
         Ok(())
     }
 }

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use bytes::Bytes;
+use bytes::{BufMut, Bytes, BytesMut};
 use serde::{Deserialize, Serialize};
 
 use crate::frame::Frame;
@@ -47,5 +47,21 @@ impl BrokerCommand {
         frame.push_u8((length & 0xFF) as u8);
         frame.push_bulk(Bytes::from(encode_data.into_bytes()));
         frame
+    }
+
+    pub fn into_bytes(&self) -> BytesMut {
+        let mut buffer = BytesMut::new();
+        let header_encode = self.encode();
+        let length = header_encode.len();
+        let frame_size = 4 + length;
+
+        buffer.put_i32(frame_size as i32);
+        buffer.put_u8(0 as u8);
+        buffer.put_u8(((length >> 16) & 0xFF) as u8);
+        buffer.put_u8(((length >> 8) & 0xFF) as u8);
+        buffer.put_u8((length & 0xFF) as u8);
+        buffer.put(Bytes::from(header_encode.into_bytes()));
+
+        return buffer;
     }
 }

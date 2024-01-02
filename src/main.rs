@@ -6,18 +6,15 @@ mod remoting;
 
 #[tokio::main]
 pub async fn main() {
-    fetch_broker_info();
+    println!("Start rocketmq exporter...");
+    fetch_broker_info().await;
 }
 
 async fn fetch_broker_info() {
+    println!("debug the broker information process......");
     let addr = String::from("rocketmq-cloud.cpaas-test:9876");
-    let mut client = match Client::connection(addr).await {
-        Ok(client) => client,
-        Err(_) => panic!("failed to establish connection"),
-    };
-    println!("Establish the connection");
-    let _result = match client.broker_info().await {
-        Ok(()) => println!("Ok is ok"),
-        Err(err) => panic!("err:{}", err),
-    };
+    let mut client = Client::connection(addr).await.unwrap();
+    println!("create the connection to server...");
+    client.broker_info().await.unwrap();
+    println!("receive response from server");
 }

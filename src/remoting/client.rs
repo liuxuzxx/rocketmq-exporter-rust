@@ -1,4 +1,4 @@
-use std::io::Error;
+use std::io::{self, Error};
 
 use serde::de::value;
 use tokio::net::{TcpStream, ToSocketAddrs};
@@ -22,13 +22,11 @@ impl Client {
     ///
     /// 发送获取broker的信息的命令
     ///
-    pub async fn broker_info(&mut self) -> Result<(), Error> {
-        let frame = BrokerCommand::new().into_frame();
-        let result = match self.connection.write_frame(&frame).await {
-            Ok(()) => println!("value failed"),
-            Err(err) => panic!("error:{}", err),
-        };
-        println!("send request to broker over!");
+    pub async fn broker_info(&mut self) -> io::Result<()> {
+        let buffer = BrokerCommand::new().into_bytes();
+        self.connection.write_bytes(buffer).await?;
+
+        let _response = self.connection.read_response().await?;
         Ok(())
     }
 }
