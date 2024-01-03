@@ -1,7 +1,6 @@
 use remoting::client::Client;
 
 mod cmd;
-mod frame;
 mod remoting;
 
 #[tokio::main]
@@ -17,4 +16,6 @@ async fn fetch_broker_info() {
     println!("create the connection to server...");
     client.broker_info().await.unwrap();
     println!("receive response from server");
+
+    client.topic_list().await.unwrap();
 }

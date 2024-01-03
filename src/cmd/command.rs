@@ -4,8 +4,8 @@ use std::{
     vec,
 };
 
-use bytes::{Buf, BytesMut};
-use serde::{de::Error, Deserialize, Serialize};
+use bytes::{Buf, BufMut, Bytes, BytesMut};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 ///
@@ -36,6 +36,28 @@ impl RemotingCommand {
             header: Header::parse(String::from_utf8(header_data).unwrap()),
         };
     }
+
+    pub fn encode(&self) -> BytesMut {
+        let mut buffer = BytesMut::new();
+        let header = self.header.encode();
+        let length = header.len();
+        let frame_size = 4 + length;
+
+        buffer.put_i32(frame_size as i32);
+        buffer.put_u8(0 as u8);
+        buffer.put_u8(((length >> 16) & 0xFF) as u8);
+        buffer.put_u8(((length >> 8) & 0xFF) as u8);
+        buffer.put_u8((length & 0xFF) as u8);
+        buffer.put(Bytes::from(header.into_bytes()));
+
+        return buffer;
+    }
+
+    pub fn new(code: RequestCode) -> RemotingCommand {
+        RemotingCommand {
+            header: Header::new(code),
+        }
+    }
 }
 
 impl Display for RemotingCommand {
@@ -48,7 +70,7 @@ impl Display for RemotingCommand {
 pub struct Header {
     code: i32,
     flag: i32,
-    language: String,
+    language: LanguageCode,
     opaque: i32,
     #[serde(rename = "serializeTypeCurrentRPC")]
     serialize_type_current_rpc: String,
@@ -56,6 +78,17 @@ pub struct Header {
 }
 
 impl Header {
+    pub fn new(request_code: RequestCode) -> Header {
+        Header {
+            code: request_code.code(),
+            flag: 0,
+            language: LanguageCode::RUST(String::from("RUST")),
+            opaque: 1,
+            serialize_type_current_rpc: String::from(""),
+            version: 317,
+        }
+    }
+
     pub fn parse(json_data: String) -> Header {
         let h: Header = serde_json::from_str(&json_data).unwrap();
         return h;
@@ -69,10 +102,6 @@ impl Header {
         self.flag
     }
 
-    pub fn language(&self) -> String {
-        self.language.clone()
-    }
-
     pub fn opaque(&self) -> i32 {
         self.opaque
     }
@@ -84,17 +113,23 @@ impl Header {
     pub fn version(&self) -> i32 {
         self.version
     }
+
+    pub fn encode(&self) -> String {
+        let header_json = serde_json::to_string(&self).unwrap();
+        header_json
+    }
 }
 
 impl Display for Header {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "code:{} flag:{} version:{} serialize_type:{}",
+            "code:{} flag:{} version:{} serialize_type:{} language:{}",
             self.code(),
             self.flag(),
             self.version(),
-            self.serialize_type_current_rpc()
+            self.serialize_type_current_rpc(),
+            self.language
         )
     }
 }
@@ -102,7 +137,7 @@ impl Display for Header {
 ///
 /// 枚举RocketMQ的Admin需要的一些类型信息
 ///
-enum LanguageCode {
+pub enum LanguageCode {
     JAVA(String),
     GO(String),
     RUST(String),
@@ -114,7 +149,7 @@ impl Serialize for LanguageCode {
         S: serde::Serializer,
     {
         match self {
-            LanguageCode::JAVA(_) => serializer.serialize_str("Java"),
+            LanguageCode::JAVA(_) => serializer.serialize_str("JAVA"),
             LanguageCode::GO(_) => serializer.serialize_str("GO"),
             LanguageCode::RUST(_) => serializer.serialize_str("RUST"),
         }
@@ -133,7 +168,7 @@ impl<'de> Deserialize<'de> for LanguageCode {
         };
 
         let v: Result<LanguageCode, _> = match v.as_str() {
-            "Java" => Ok(LanguageCode::JAVA(String::from("Java"))),
+            "JAVA" => Ok(LanguageCode::JAVA(String::from("JAVA"))),
             "GO" => Ok(LanguageCode::GO(String::from("GO"))),
             "RUST" => Ok(LanguageCode::RUST(String::from("RUST"))),
             _ => Ok(LanguageCode::RUST(String::from("RUST"))),
@@ -142,10 +177,21 @@ impl<'de> Deserialize<'de> for LanguageCode {
     }
 }
 
+impl Display for LanguageCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let v = match self {
+            LanguageCode::GO(x) => "GO",
+            LanguageCode::JAVA(x) => "JAVA",
+            LanguageCode::RUST(x) => "RUST",
+        };
+        write!(f, "{}", v)
+    }
+}
+
 ///
 /// RocketMQ的RequestCode
 ///
-enum RequestCode {
+pub enum RequestCode {
     SendMessage,
     PullMessage,
     QueryMessage,

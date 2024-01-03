@@ -1,9 +1,8 @@
 use std::io::{self, Error};
 
-use serde::de::value;
 use tokio::net::{TcpStream, ToSocketAddrs};
 
-use crate::cmd::broker::BrokerCommand;
+use crate::cmd::{broker::BrokerCommand, command::RemotingCommand, command::RequestCode};
 
 use super::connection::Connection;
 
@@ -26,6 +25,13 @@ impl Client {
         let buffer = BrokerCommand::new().into_bytes();
         self.connection.write_bytes(buffer).await?;
 
+        let _response = self.connection.read_response().await?;
+        Ok(())
+    }
+
+    pub async fn topic_list(&mut self) -> io::Result<()> {
+        let buffer = RemotingCommand::new(RequestCode::GetAllTopicListFromNameserver).encode();
+        self.connection.write_bytes(buffer).await?;
         let _response = self.connection.read_response().await?;
         Ok(())
     }
