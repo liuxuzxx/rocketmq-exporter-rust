@@ -5,7 +5,8 @@ use std::{
 };
 
 use bytes::{Buf, BytesMut};
-use serde::{Deserialize, Serialize};
+use serde::{de::Error, Deserialize, Serialize};
+use serde_json::Value;
 
 ///
 /// RocketMQ的RemotingCommand的Request和Response的格式一致
@@ -95,5 +96,48 @@ impl Display for Header {
             self.version(),
             self.serialize_type_current_rpc()
         )
+    }
+}
+
+///
+/// 枚举RocketMQ的Admin需要的一些类型信息
+///
+enum LanguageCode {
+    JAVA(String),
+    GO(String),
+    RUST(String),
+}
+
+impl Serialize for LanguageCode {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            LanguageCode::JAVA(_) => serializer.serialize_str("Java"),
+            LanguageCode::GO(_) => serializer.serialize_str("GO"),
+            LanguageCode::RUST(_) => serializer.serialize_str("RUST"),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for LanguageCode {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let v: Value = Deserialize::deserialize(deserializer)?;
+        let v = match v {
+            Value::String(v) => v,
+            _ => return Err(serde::de::Error::custom("Excepted string")),
+        };
+
+        let v: Result<LanguageCode, _> = match v.as_str() {
+            "Java" => Ok(LanguageCode::JAVA(String::from("Java"))),
+            "GO" => Ok(LanguageCode::GO(String::from("GO"))),
+            "RUST" => Ok(LanguageCode::RUST(String::from("RUST"))),
+            _ => Ok(LanguageCode::RUST(String::from("RUST"))),
+        };
+        v
     }
 }
