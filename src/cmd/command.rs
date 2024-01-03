@@ -151,7 +151,7 @@ enum RequestCode {
     QueryMessage,
     QueryBrokerOffset,
     QueryConsumerOffset,
-    UpateConsumerOffset,
+    UpdateConsumerOffset,
     UpdateAndCreateTopic,
     GetAllTopicConfig,
     GetTopicConfigList,
@@ -159,7 +159,7 @@ enum RequestCode {
     UpdateBrokerConfig,
     GetBrokerConfig,
     TriggerDeleteFiles,
-    GetBrokerRuntingInfo,
+    GetBrokerRuntimeInfo,
     SearchOffsetByTimestamp,
     GetmaxOffset,
     GetMinOffset,
@@ -208,6 +208,7 @@ enum RequestCode {
     DeleteTopicInNamesrv,
     GetKvlistByNamespace,
     ResetConsumerClientOffset,
+    GetConsumerStatusFromClient,
     InvokeBrokerToResetOffset,
     InvokeBrokerToGetConsuemrStatus,
     QueryTopicConsumeByWho,
@@ -241,4 +242,130 @@ enum RequestCode {
     AddWritePermOfBroker,
     GetAllProducerInfo,
     DeleteExpiredCommitLog,
+}
+
+impl RequestCode {
+    pub fn code(&self) -> i32 {
+        match *self {
+            RequestCode::SendMessage => 10,
+            RequestCode::PullMessage => 11,
+            RequestCode::QueryMessage => 12,
+            RequestCode::QueryBrokerOffset => 13,
+            RequestCode::QueryConsumerOffset => 14,
+            RequestCode::UpdateConsumerOffset => 15,
+            RequestCode::UpdateAndCreateTopic => 17,
+            RequestCode::GetAllTopicConfig => 21,
+            RequestCode::GetTopicConfigList => 22,
+            RequestCode::GetTopicNameList => 23,
+            RequestCode::UpdateBrokerConfig => 25,
+            RequestCode::GetBrokerConfig => 26,
+            RequestCode::TriggerDeleteFiles => 27,
+            RequestCode::GetBrokerRuntimeInfo => 28,
+            RequestCode::SearchOffsetByTimestamp => 29,
+            RequestCode::GetmaxOffset => 30,
+            RequestCode::GetMinOffset => 31,
+            RequestCode::GetEarliestMsgStoretime => 32,
+            RequestCode::ViewMessageById => 33,
+            RequestCode::HeartBeat => 34,
+            RequestCode::UndergisterClient => 35,
+            RequestCode::ConsumerSendMsgBack => 36,
+            RequestCode::EndTransaction => 37,
+            RequestCode::GetConsumerListByGroup => 38,
+            RequestCode::CheckTransactionState => 39,
+            RequestCode::NotifyConsumerIdsChanged => 40,
+            RequestCode::LockBatchMq => 41,
+            RequestCode::UnlockBatchMq => 42,
+            RequestCode::GetAllConsumerOffset => 43,
+            RequestCode::GetAllDelayOffset => 45,
+            RequestCode::CheckClientConfig => 46,
+            RequestCode::UpdateAndCreateAclConfig => 50,
+            RequestCode::DeleteAclConfig => 51,
+            RequestCode::GetBrokerClusterAclInfo => 52,
+            RequestCode::UpdateGlobalWhiteAddrsConfig => 53,
+            RequestCode::GetBrokerClusterAclConfig => 54,
+            RequestCode::PutKvConfig => 100,
+            RequestCode::GetKvConfig => 101,
+            RequestCode::DeleteKvConfig => 102,
+            RequestCode::RegisterBroker => 103,
+            RequestCode::UnregisterBroker => 104,
+            RequestCode::GetRouteInfoByTopic => 105,
+            RequestCode::GetBrokerClusterInfo => 106,
+            RequestCode::UpdateAndCreateSubscriptionGroup => 200,
+            RequestCode::GetAllSubscriptionGroupConfig => 201,
+            RequestCode::GetTOpicStatsInfo => 202,
+            RequestCode::GetConsumerConnectionList => 203,
+            RequestCode::GetProducerConnectionList => 204,
+            RequestCode::WipeWritePermOfBroker => 205,
+            RequestCode::GetAllTopicListFromNameserver => 206,
+            RequestCode::DeleteSuscriptionGroup => 207,
+            RequestCode::GetConsumeStats => 208,
+            RequestCode::SuspendConsumer => 209,
+            RequestCode::ResumeConsuemr => 210,
+            RequestCode::ResetConsumerOffsetInConsumer => 211,
+            RequestCode::ResetConsumerOffsetInBroker => 212,
+            RequestCode::AdjustConsumerThreadPool => 213,
+            RequestCode::WhoConsumeTheMessage => 214,
+            RequestCode::DeleteTopicInBroker => 215,
+            RequestCode::DeleteTopicInNamesrv => 216,
+            RequestCode::GetKvlistByNamespace => 219,
+            RequestCode::ResetConsumerClientOffset => 220,
+            RequestCode::GetConsumerStatusFromClient => 221,
+            RequestCode::InvokeBrokerToResetOffset => 222,
+            RequestCode::InvokeBrokerToGetConsuemrStatus => 223,
+            RequestCode::QueryTopicConsumeByWho => 300,
+            RequestCode::GetTopicsByCluster => 224,
+            RequestCode::RegisterFliterServer => 301,
+            RequestCode::RegisterMessageFilterClass => 302,
+            RequestCode::QueryConsumeTimeSpan => 303,
+            RequestCode::GetSystemTopicListFromNs => 304,
+            RequestCode::GetSystemTopicListFromBroker => 305,
+            RequestCode::CleanExpiredConsumeQueue => 306,
+            RequestCode::GetConsumerRunningInfo => 307,
+            RequestCode::QueryCorrectionOffset => 308,
+            RequestCode::ConsumeMessageDirectly => 309,
+            RequestCode::SendMessageV2 => 310,
+            RequestCode::GetUnitTopicList => 311,
+            RequestCode::GetHasUnitSubTopicList => 312,
+            RequestCode::GetHashUnitSubUnunitTopicList => 313,
+            RequestCode::CloneGroupOffset => 314,
+            RequestCode::ViewBrokerStatsData => 315,
+            RequestCode::CleanUnusedTopic => 316,
+            RequestCode::GetBrokerConsumeStats => 317,
+            RequestCode::UpdateNamesrvConfig => 318,
+            RequestCode::GetNamesrvConfig => 319,
+            RequestCode::SendBatchMessage => 320,
+            RequestCode::QueryConsumeQueue => 321,
+            RequestCode::QueryDataVersion => 322,
+            RequestCode::ResumeCheckHalfMessage => 323,
+            RequestCode::SendReplyMessage => 324,
+            RequestCode::SendReplyMessageV2 => 325,
+            RequestCode::PushReplyMessageToClient => 326,
+            RequestCode::AddWritePermOfBroker => 327,
+            RequestCode::GetAllProducerInfo => 328,
+            RequestCode::DeleteExpiredCommitLog => 329,
+        }
+    }
+}
+
+impl Serialize for RequestCode {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_i32(self.code())
+    }
+}
+
+impl<'de> Deserialize<'de> for RequestCode {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let v: Value = Deserialize::deserialize(deserializer)?;
+        let v = match v {
+            Value::Number(x) => x.as_i64(),
+            _ => return Err(serde::de::Error::custom("Excepted Number")),
+        };
+        Ok(RequestCode::GetBrokerClusterInfo)
+    }
 }
