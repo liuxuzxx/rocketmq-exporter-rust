@@ -355,17 +355,3 @@ impl Serialize for RequestCode {
         serializer.serialize_i32(self.code())
     }
 }
-
-impl<'de> Deserialize<'de> for RequestCode {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let v: Value = Deserialize::deserialize(deserializer)?;
-        let v = match v {
-            Value::Number(x) => x.as_i64(),
-            _ => return Err(serde::de::Error::custom("Excepted Number")),
-        };
-        Ok(RequestCode::GetBrokerClusterInfo)
-    }
-}
