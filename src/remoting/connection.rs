@@ -18,7 +18,7 @@ impl Connection {
     pub fn new(socket: TcpStream) -> Connection {
         Connection {
             stream: BufWriter::new(socket),
-            buffer: BytesMut::with_capacity(4 * 1024),
+            buffer: BytesMut::with_capacity(40 * 1024),
         }
     }
 
@@ -38,6 +38,7 @@ impl Connection {
         );
         let response = RemotingCommand::parse(&self.buffer);
         println!("RocketMQ response:{}", response);
+        self.buffer.clear();
         Ok(())
     }
 }
