@@ -35,4 +35,11 @@ impl Client {
         let _response = self.connection.read_response().await?;
         Ok(())
     }
+
+    pub async fn broker_runtime_info(&mut self) -> io::Result<()> {
+        let buffer = RemotingCommand::new(RequestCode::GetBrokerRuntimeInfo).encode();
+        self.connection.write_bytes(buffer).await?;
+        let _response = self.connection.read_response().await?;
+        Ok(())
+    }
 }

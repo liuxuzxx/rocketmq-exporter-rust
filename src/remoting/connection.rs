@@ -30,12 +30,22 @@ impl Connection {
     }
 
     pub async fn read_response(&mut self) -> io::Result<()> {
-        let count = self.stream.read_buf(&mut self.buffer).await?;
-        println!(
-            "read data from server:{} content is:{:?}",
-            count,
-            String::from_utf8_lossy(&self.buffer[..])
-        );
+        loop {
+            let count = self.stream.read_buf(&mut self.buffer).await?;
+            if count == 0 {
+                println!(
+                    "read data size:{count} from server content is:{:?}",
+                    String::from_utf8_lossy(&self.buffer[..])
+                );
+                break;
+            } else {
+                println!(
+                    "read data size:{count} content:{:?}",
+                    String::from_utf8_lossy(&self.buffer[..])
+                );
+            }
+        }
+
         let response = RemotingCommand::parse(&self.buffer);
         println!("RocketMQ response:{}", response);
         self.buffer.clear();
