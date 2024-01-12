@@ -1,12 +1,14 @@
 use std::{
-    fmt::Display,
+    fmt::{write, Display},
     io::{Cursor, Read},
+    process::Command,
     vec,
 };
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use tokio_util::codec;
 
 ///
 /// RocketMQ的RemotingCommand的Request和Response的格式一致
@@ -399,5 +401,61 @@ impl Serialize for RequestCode {
         S: serde::Serializer,
     {
         serializer.serialize_i32(self.code())
+    }
+}
+
+pub struct CommandCoderc {}
+
+impl CommandCoderc {
+    const MAX_SIZE: usize = 1024 * 1024 * 1024 * 8;
+    const PROTOCOL_LENGTH: usize = 4;
+}
+
+impl codec::Decoder for CommandCoderc {
+    type Item = RemotingCommand;
+    type Error = std::io::Error;
+
+    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
+        let buf_len = src.len();
+
+        if buf_len < CommandCoderc::PROTOCOL_LENGTH {
+            return Ok(None);
+        }
+
+        let mut length_bytes = [0u8; 4];
+        length_bytes.copy_from_slice(&src[0..4]);
+        let data_len = u32::from_be_bytes(length_bytes) as usize;
+
+        if data_len > Self::MAX_SIZE {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("Frame data length {data_len} > {}", Self::MAX_SIZE),
+            ));
+        }
+
+        let frame_len = data_len + Self::PROTOCOL_LENGTH;
+        if buf_len < frame_len {
+            return Ok(None);
+        }
+
+        let response = RemotingCommand::parse(&src);
+        Ok(Some(response))
+    }
+}
+
+impl codec::Encoder<RemotingCommand> for CommandCoderc {
+    type Error = std::io::Error;
+    fn encode(&mut self, item: RemotingCommand, dst: &mut BytesMut) -> Result<(), Self::Error> {
+        let header = item.header.encode();
+        let length = header.len();
+        let frame_size = 4 + length;
+
+        dst.put_i32(frame_size as i32);
+        dst.put_u8(0 as u8);
+        dst.put_u8(((length >> 16) & 0xFF) as u8);
+        dst.put_u8(((length >> 8) & 0xFF) as u8);
+        dst.put_u8((length & 0xFF) as u8);
+        dst.put(Bytes::from(header.into_bytes()));
+        Ok(())
     }
 }
