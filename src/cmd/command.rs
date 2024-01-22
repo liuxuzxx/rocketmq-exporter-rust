@@ -55,6 +55,19 @@ impl RemotingCommand {
         return buffer;
     }
 
+    pub fn encode_no_length(&self) -> BytesMut {
+        let mut buffer = BytesMut::new();
+        let header = self.header.encode();
+        let length = header.len();
+        buffer.put_u8(0 as u8);
+        buffer.put_u8(((length >> 16) & 0xFF) as u8);
+        buffer.put_u8(((length >> 8) & 0xFF) as u8);
+        buffer.put_u8((length & 0xFF) as u8);
+        buffer.put(Bytes::from(header.into_bytes()));
+
+        return buffer;
+    }
+
     pub fn new(code: RequestCode) -> RemotingCommand {
         RemotingCommand {
             header: Header::new(code),
