@@ -1,8 +1,9 @@
 use std::io::{self, Error};
 
+use bytes::BytesMut;
 use tokio::net::{TcpStream, ToSocketAddrs};
 
-use crate::cmd::{broker::BrokerCommand, command::RemotingCommand, command::RequestCode};
+use crate::cmd::{command::RemotingCommand, command::RequestCode};
 
 use super::connection::Connection;
 
@@ -21,21 +22,21 @@ impl Client {
     ///
     /// 发送获取broker的信息的命令
     ///
-    pub async fn broker_info(&mut self) -> io::Result<()> {
+    pub async fn broker_info(&mut self) -> Result<BytesMut, String> {
         let command = RemotingCommand::new(RequestCode::GetBrokerClusterInfo);
-        self.connection.send_request(command).await;
-        Ok(())
+        let data = self.connection.send_request(command).await.unwrap();
+        Ok(data)
     }
 
-    pub async fn topic_list(&mut self) -> io::Result<()> {
+    pub async fn topic_list(&mut self) -> Result<BytesMut, String> {
         let command = RemotingCommand::new(RequestCode::GetAllTopicListFromNameserver);
-        self.connection.send_request(command).await;
-        Ok(())
+        let data = self.connection.send_request(command).await.unwrap();
+        Ok(data)
     }
 
-    pub async fn broker_runtime_info(&mut self) -> io::Result<()> {
+    pub async fn broker_runtime_info(&mut self) -> Result<BytesMut, String> {
         let command = RemotingCommand::new(RequestCode::GetBrokerRuntimeInfo);
-        self.connection.send_request(command).await;
-        Ok(())
+        let data = self.connection.send_request(command).await.unwrap();
+        Ok(data)
     }
 }
