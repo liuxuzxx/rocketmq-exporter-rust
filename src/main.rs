@@ -13,9 +13,8 @@ mod remoting;
 #[tokio::main]
 pub async fn main() {
     println!("Start rocketmq exporter...");
-    //fetch_broker_info().await;
+    fetch_broker_info().await;
     //broker_operation().await;
-    frame_broker_operation().await;
 }
 
 async fn fetch_broker_info() {
