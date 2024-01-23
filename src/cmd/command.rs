@@ -6,13 +6,14 @@ use std::{
 };
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 use serde_json::Value;
 use tokio_util::codec;
 
 ///
 /// RocketMQ的RemotingCommand的Request和Response的格式一致
 ///
+#[derive(Debug)]
 pub struct RemotingCommand {
     header: Header,
 }
@@ -20,7 +21,7 @@ pub struct RemotingCommand {
 impl RemotingCommand {
     pub fn parse(content: &BytesMut) -> RemotingCommand {
         let mut buf = Cursor::new(&content[..]);
-        let length = buf.get_i32();
+        let length = content.len() as i32;
         println!("content length:{}", length);
 
         let origin_header_length = buf.get_i32();
@@ -37,22 +38,6 @@ impl RemotingCommand {
         return RemotingCommand {
             header: Header::parse(String::from_utf8(header_data).unwrap()),
         };
-    }
-
-    pub fn encode(&self) -> BytesMut {
-        let mut buffer = BytesMut::new();
-        let header = self.header.encode();
-        let length = header.len();
-        let frame_size = 4 + length;
-
-        buffer.put_i32(frame_size as i32);
-        buffer.put_u8(0 as u8);
-        buffer.put_u8(((length >> 16) & 0xFF) as u8);
-        buffer.put_u8(((length >> 8) & 0xFF) as u8);
-        buffer.put_u8((length & 0xFF) as u8);
-        buffer.put(Bytes::from(header.into_bytes()));
-
-        return buffer;
     }
 
     pub fn encode_no_length(&self) -> BytesMut {
@@ -81,7 +66,7 @@ impl Display for RemotingCommand {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Header {
     code: i32,
     flag: i32,
@@ -152,6 +137,7 @@ impl Display for Header {
 ///
 /// 枚举RocketMQ的Admin需要的一些类型信息
 ///
+#[derive(Debug)]
 pub enum LanguageCode {
     JAVA(String),
     GO(String),

@@ -22,10 +22,13 @@ impl Client {
     ///
     /// 发送获取broker的信息的命令
     ///
-    pub async fn broker_info(&mut self) -> Result<BytesMut, String> {
+    pub async fn broker_info(&mut self) -> BytesMut {
         let command = RemotingCommand::new(RequestCode::GetBrokerClusterInfo);
         let data = self.connection.send_request(command).await.unwrap();
-        Ok(data)
+        let response = RemotingCommand::parse(&data);
+        println!("Parse server data:{:?}", response);
+
+        data
     }
 
     pub async fn topic_list(&mut self) -> Result<BytesMut, String> {

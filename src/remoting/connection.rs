@@ -1,11 +1,6 @@
-use std::io::{self, Error};
-
 use bytes::BytesMut;
 use futures::{SinkExt, StreamExt};
-use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt, BufWriter},
-    net::TcpStream,
-};
+use tokio::net::TcpStream;
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
 
 use crate::cmd::command::RemotingCommand;

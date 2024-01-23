@@ -22,7 +22,7 @@ async fn fetch_broker_info() {
     let addr = String::from("rocketmq-cloud.cpaas-test:9876");
     let mut client = Client::connection(addr).await.unwrap();
     println!("获取Broker信息");
-    client.broker_info().await.unwrap();
+    client.broker_info().await;
 }
 
 ///
