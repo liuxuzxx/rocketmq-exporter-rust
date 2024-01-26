@@ -1,6 +1,7 @@
 use remoting::client::Client;
 mod cmd;
 mod remoting;
+mod util;
 
 #[tokio::main]
 pub async fn main() {
