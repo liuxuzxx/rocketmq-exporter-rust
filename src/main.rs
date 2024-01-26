@@ -5,13 +5,21 @@ mod remoting;
 #[tokio::main]
 pub async fn main() {
     println!("Start rocketmq exporter...");
-    fetch_broker_info().await;
+    rocketmq_metrics().await;
 }
 
-async fn fetch_broker_info() {
-    println!("debug the broker information process......");
+async fn rocketmq_metrics() {
     let addr = String::from("rocketmq-cloud.cpaas-test:9876");
     let mut client = Client::connection(addr).await.unwrap();
-    println!("获取Broker信息");
-    client.broker_info().await;
+    let response = client.broker_info().await;
+    println!("broker information:{:?}", response);
+
+    let response = client.topic_list().await;
+    println!("Topic List:{:?}", response);
+
+    let topics = response.topics();
+    for topic in topics {
+        let route_reponse = client.topic_route(topic.clone()).await;
+        println!("Topic:{} route:{:?}", topic, route_reponse);
+    }
 }

@@ -1,11 +1,16 @@
-use std::io::{self, Error};
+use std::io::Error;
 
-use bytes::BytesMut;
 use tokio::net::{TcpStream, ToSocketAddrs};
 
-use crate::cmd::{command::RemotingCommand, command::RequestCode};
+use crate::cmd::{
+    command::RemotingCommand,
+    command::{RequestCode, TopicRouteInfoRequestHeader},
+};
 
-use super::connection::Connection;
+use super::{
+    connection::Connection,
+    response::{BrokerInformation, TopicRouteInformation, Topics},
+};
 
 pub struct Client {
     connection: Connection,
@@ -22,24 +27,37 @@ impl Client {
     ///
     /// 发送获取broker的信息的命令
     ///
-    pub async fn broker_info(&mut self) -> BytesMut {
+    pub async fn broker_info(&mut self) -> BrokerInformation {
         let command = RemotingCommand::new(RequestCode::GetBrokerClusterInfo);
         let data = self.connection.send_request(command).await.unwrap();
-        let response = RemotingCommand::parse(&data);
-        println!("Parse server data:{:?}", response);
-
-        data
+        let body = data.body();
+        let b = BrokerInformation::parse(body.to_string());
+        b
     }
 
-    pub async fn topic_list(&mut self) -> Result<BytesMut, String> {
+    ///
+    /// 从Nameserver这个地址获取到Topic信息列表
+    ///
+    pub async fn topic_list(&mut self) -> Topics {
         let command = RemotingCommand::new(RequestCode::GetAllTopicListFromNameserver);
         let data = self.connection.send_request(command).await.unwrap();
-        Ok(data)
+        Topics::parse(data.body().to_string())
     }
 
-    pub async fn broker_runtime_info(&mut self) -> Result<BytesMut, String> {
+    ///
+    /// 获取Topic的Route信息
+    ///
+    pub async fn topic_route(&mut self, topic: String) -> TopicRouteInformation {
+        let custom_header = TopicRouteInfoRequestHeader::new(topic);
+        let custom_header = Some(custom_header);
+        let command = RemotingCommand::build(RequestCode::GetRouteInfoByTopic, custom_header);
+        let data = self.connection.send_request(command).await.unwrap();
+        TopicRouteInformation::parse(data.body().to_string())
+    }
+
+    pub async fn broker_runtime_info(&mut self) -> RemotingCommand {
         let command = RemotingCommand::new(RequestCode::GetBrokerRuntimeInfo);
         let data = self.connection.send_request(command).await.unwrap();
-        Ok(data)
+        data
     }
 }

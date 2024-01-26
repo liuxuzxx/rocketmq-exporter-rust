@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fmt::Display,
     io::{Cursor, Read},
 };
@@ -14,6 +15,7 @@ use tokio_util::codec;
 #[derive(Debug)]
 pub struct RemotingCommand {
     header: Header,
+    body: String,
 }
 
 impl RemotingCommand {
@@ -32,9 +34,9 @@ impl RemotingCommand {
         let body_length = length - 4 - header_length;
         let mut body_data = vec![0u8; body_length as usize];
         buf.read(&mut body_data).unwrap();
-        println!("parse data body:{}", String::from_utf8(body_data).unwrap());
         return RemotingCommand {
             header: Header::parse(String::from_utf8(header_data).unwrap()),
+            body: String::from_utf8(body_data).unwrap(),
         };
     }
 
@@ -54,7 +56,25 @@ impl RemotingCommand {
     pub fn new(code: RequestCode) -> RemotingCommand {
         RemotingCommand {
             header: Header::new(code),
+            body: String::from(""),
         }
+    }
+
+    pub fn build<T: CustomHeader>(code: RequestCode, custom_header: Option<T>) -> RemotingCommand {
+        let mut header = Header::new(code);
+
+        if let Some(data) = custom_header {
+            let encode_header = data.encode();
+            header.ext_fields = encode_header;
+        }
+        RemotingCommand {
+            header: header,
+            body: String::from(""),
+        }
+    }
+
+    pub fn body(&self) -> &str {
+        &self.body
     }
 }
 
@@ -73,6 +93,8 @@ pub struct Header {
     #[serde(rename = "serializeTypeCurrentRPC")]
     serialize_type_current_rpc: String,
     version: i32,
+    #[serde(rename = "extFields", default)]
+    ext_fields: HashMap<String, String>,
 }
 
 impl Header {
@@ -84,6 +106,7 @@ impl Header {
             opaque: 1,
             serialize_type_current_rpc: String::from(""),
             version: 317,
+            ext_fields: HashMap::new(),
         }
     }
 
@@ -454,5 +477,32 @@ impl codec::Encoder<RemotingCommand> for CommandCoderc {
         dst.put_u8((length & 0xFF) as u8);
         dst.put(Bytes::from(header.into_bytes()));
         Ok(())
+    }
+}
+
+///
+/// 实现请求的Header的特殊化的Trait
+///
+pub trait CustomHeader {
+    ///
+    /// 提供RocketMQ请求头部的编码trait
+    fn encode(&self) -> HashMap<String, String>;
+}
+
+pub struct TopicRouteInfoRequestHeader {
+    topic: String,
+}
+
+impl CustomHeader for TopicRouteInfoRequestHeader {
+    fn encode(&self) -> HashMap<String, String> {
+        let mut data = HashMap::new();
+        data.insert(String::from("topic"), self.topic.clone());
+        data
+    }
+}
+
+impl TopicRouteInfoRequestHeader {
+    pub fn new(topic: String) -> TopicRouteInfoRequestHeader {
+        TopicRouteInfoRequestHeader { topic: topic }
     }
 }
