@@ -202,9 +202,9 @@ impl<'de> Deserialize<'de> for LanguageCode {
 impl Display for LanguageCode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let v = match self {
-            LanguageCode::GO(x) => "GO",
-            LanguageCode::JAVA(x) => "JAVA",
-            LanguageCode::RUST(x) => "RUST",
+            LanguageCode::GO(_x) => "GO",
+            LanguageCode::JAVA(_x) => "JAVA",
+            LanguageCode::RUST(_x) => "RUST",
         };
         write!(f, "{}", v)
     }
