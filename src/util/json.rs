@@ -33,7 +33,7 @@ impl Tokenizer {
         }
     }
 
-    pub fn parse(&mut self) {
+    fn parse(&mut self) {
         let chars = self.source.chars();
         let mut iter = chars.enumerate();
 
@@ -106,7 +106,8 @@ impl Tokenizer {
 
     ///
     /// 正规化JSON，采用解析JSON的方案来处理
-    pub fn regular_json(&self) -> String {
+    pub fn regular_json(&mut self) -> String {
+        self.parse();
         let mut json = String::from("");
         let mut iter = self.tokens.iter();
         loop {
@@ -210,7 +211,6 @@ mod tests {
         "#;
 
         let mut tokenizer = Tokenizer::new(json.to_string());
-        tokenizer.parse();
         let result = tokenizer.regular_json();
         println!("打印Tokenizer:{:?} 规范后的JSON:{}", tokenizer, result);
     }
