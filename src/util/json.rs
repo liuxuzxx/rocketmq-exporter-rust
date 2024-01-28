@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use serde_json::Number;
+
 #[derive(Debug)]
 pub enum TokenType {
     BeginObject(char),
@@ -101,6 +103,80 @@ impl Tokenizer {
             }
         }
     }
+
+    ///
+    /// 正规化JSON，采用解析JSON的方案来处理
+    pub fn regular_json(&self) -> String {
+        let mut json = String::from("");
+        let mut iter = self.tokens.iter();
+        loop {
+            match iter.next() {
+                Some(t) => match t {
+                    TokenType::BeginObject(c)
+                    | TokenType::EndObject(c)
+                    | TokenType::BeginArray(c)
+                    | TokenType::EndArray(c) => json.push(*c),
+                    TokenType::Null(s) | TokenType::Boolean(s) => json.push_str(s.as_str()),
+                    TokenType::SepColon(c) | TokenType::SepComma(c) => json.push(*c),
+                    TokenType::Number(s) => match iter.next() {
+                        Some(next) => match next {
+                            TokenType::SepColon(c) => {
+                                let mut temp = String::from("\"");
+                                temp.push_str(s.as_str());
+                                temp.push('"');
+                                json.push_str(&temp.as_str());
+                                json.push(*c);
+                            }
+                            TokenType::EndObject(c)
+                            | TokenType::EndArray(c)
+                            | TokenType::SepComma(c) => {
+                                json.push_str(s.as_str());
+                                json.push(*c);
+                            }
+                            _ => {
+                                return json;
+                            }
+                        },
+                        None => {
+                            return json;
+                        }
+                    },
+                    TokenType::StringValue(s) => match iter.next() {
+                        Some(next) => match next {
+                            TokenType::SepColon(c) => {
+                                let mut temp = String::from("\"");
+                                temp.push_str(s.as_str());
+                                temp.push('"');
+                                json.push_str(&temp.as_str());
+                                json.push(*c);
+                            }
+                            TokenType::EndObject(c)
+                            | TokenType::EndArray(c)
+                            | TokenType::SepComma(c) => {
+                                json.push('"');
+                                json.push_str(s.as_str());
+                                json.push('"');
+                                json.push(*c);
+                            }
+                            _ => {
+                                return json;
+                            }
+                        },
+                        None => {
+                            return json;
+                        }
+                    },
+                    TokenType::EndDocument => {
+                        return json;
+                    }
+                },
+                None => {
+                    return json;
+                }
+            }
+        }
+        json
+    }
 }
 
 #[cfg(test)]
@@ -135,6 +211,7 @@ mod tests {
 
         let mut tokenizer = Tokenizer::new(json.to_string());
         tokenizer.parse();
-        println!("打印Tokenizer:{:?}", tokenizer);
+        let result = tokenizer.regular_json();
+        println!("打印Tokenizer:{:?} 规范后的JSON:{}", tokenizer, result);
     }
 }
