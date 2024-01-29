@@ -34,7 +34,7 @@ impl BrokerInformation {
 
 #[derive(Deserialize, Debug)]
 pub struct TopicRouteInformation {
-    #[serde(rename = "orderTopicConf")]
+    #[serde(rename = "orderTopicConf", default)]
     order_topic_conf: String,
 
     #[serde(rename = "brokerDatas")]
