@@ -54,10 +54,4 @@ impl Client {
         let data = self.connection.send_request(command).await.unwrap();
         TopicRouteInformation::parse(data.body().to_string())
     }
-
-    pub async fn broker_runtime_info(&mut self) -> RemotingCommand {
-        let command = RemotingCommand::new(RequestCode::GetBrokerRuntimeInfo);
-        let data = self.connection.send_request(command).await.unwrap();
-        data
-    }
 }
