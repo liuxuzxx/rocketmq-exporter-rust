@@ -14,6 +14,7 @@ use super::{
 
 pub struct Client {
     connection: Connection,
+    broker_connections: Option<Vec<Connection>>,
 }
 
 impl Client {
@@ -21,7 +22,23 @@ impl Client {
         let socket = TcpStream::connect(addr).await?;
 
         let connection = Connection::new(socket);
-        Ok(Client { connection })
+        Ok(Client {
+            connection,
+            broker_connections: None,
+        })
+    }
+
+    pub async fn broker_connection(&mut self) {
+        let broker_info = self.broker_info().await;
+        let all_broker_addrs = broker_info.all_broker_addrs();
+
+        let mut broker_connections = vec![];
+        for addr in all_broker_addrs.iter() {
+            let socket = TcpStream::connect(*addr).await.unwrap();
+            let connection = Connection::new(socket);
+            broker_connections.push(connection);
+        }
+        self.broker_connections = Some(broker_connections);
     }
 
     ///

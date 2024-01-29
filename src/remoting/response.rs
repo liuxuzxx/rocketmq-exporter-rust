@@ -1,15 +1,43 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    path::MAIN_SEPARATOR,
+    vec,
+};
 
 use serde::Deserialize;
 
 use crate::util::json::Tokenizer;
 
+///
+/// RocketMQ的信息的Master的ID，是: 0
+const MASTER_KEY: i64 = 0;
 #[derive(Deserialize, Debug)]
 pub struct BrokerInformation {
     #[serde(rename = "brokerAddrTable")]
     broker_addr_table: HashMap<String, BrokerData>,
     #[serde(rename = "clusterAddrTable")]
     cluster_addr_table: HashMap<String, HashSet<String>>,
+}
+
+impl BrokerInformation {
+    pub fn parse(source: String) -> BrokerInformation {
+        let json = Tokenizer::new(source).regular_json();
+        let b: BrokerInformation = serde_json::from_str(&json).unwrap();
+        b
+    }
+
+    pub fn all_broker_addrs(&self) -> Vec<&String> {
+        let mut addrs = vec![];
+        for (_, value) in self.broker_addr_table.iter() {
+            match value.master_broker_addrs() {
+                Some(addr) => {
+                    addrs.push(addr);
+                }
+                None => continue,
+            }
+        }
+        addrs
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -21,11 +49,9 @@ struct BrokerData {
     broker_addrs: HashMap<i64, String>,
 }
 
-impl BrokerInformation {
-    pub fn parse(source: String) -> BrokerInformation {
-        let json = Tokenizer::new(source).regular_json();
-        let b: BrokerInformation = serde_json::from_str(&json).unwrap();
-        b
+impl BrokerData {
+    fn master_broker_addrs(&self) -> Option<&String> {
+        self.broker_addrs.get(&MASTER_KEY)
     }
 }
 
