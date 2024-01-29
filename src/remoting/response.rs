@@ -1,7 +1,4 @@
-use std::{
-    char,
-    collections::{HashMap, HashSet},
-};
+use std::collections::{HashMap, HashSet};
 
 use serde::Deserialize;
 
