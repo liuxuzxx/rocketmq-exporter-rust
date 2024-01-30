@@ -4,32 +4,37 @@ use tokio::net::{TcpStream, ToSocketAddrs};
 
 use crate::cmd::{
     command::RemotingCommand,
-    command::{RequestCode, TopicRouteInfoRequestHeader},
+    command::{GetTopicStatsInfoHeader, RequestCode, TopicRouteInfoRequestHeader},
 };
 
 use super::{
     connection::Connection,
-    response::{BrokerInformation, TopicRouteInformation, Topics},
+    response::{BrokerInformation, TopicRouteInformation, TopicStats, Topics},
 };
 
 pub struct Client {
     connection: Connection,
-    broker_connections: Option<Vec<Connection>>,
+    broker_connections: Vec<Connection>,
 }
 
 impl Client {
     pub async fn connection<T: ToSocketAddrs>(addr: T) -> Result<Client, Error> {
         let socket = TcpStream::connect(addr).await?;
 
-        let connection = Connection::new(socket);
+        let mut connection = Connection::new(socket);
+
+        let broker_connection = Client::broker_connection(&mut connection).await;
+
         Ok(Client {
             connection,
-            broker_connections: None,
+            broker_connections: broker_connection,
         })
     }
 
-    pub async fn broker_connection(&mut self) {
-        let broker_info = self.broker_info().await;
+    pub async fn broker_connection(namesrv_connection: &mut Connection) -> Vec<Connection> {
+        let command = RemotingCommand::new(RequestCode::GetBrokerClusterInfo);
+        let broker_info = namesrv_connection.send_request(command).await.unwrap();
+        let broker_info = BrokerInformation::parse(broker_info.body().to_string());
         let all_broker_addrs = broker_info.all_broker_addrs();
 
         let mut broker_connections = vec![];
@@ -38,7 +43,7 @@ impl Client {
             let connection = Connection::new(socket);
             broker_connections.push(connection);
         }
-        self.broker_connections = Some(broker_connections);
+        broker_connections
     }
 
     ///
@@ -70,5 +75,15 @@ impl Client {
         let command = RemotingCommand::build(RequestCode::GetRouteInfoByTopic, custom_header);
         let data = self.connection.send_request(command).await.unwrap();
         TopicRouteInformation::parse(data.body().to_string())
+    }
+
+    ///
+    /// 获取Topic的stats统计信息
+    pub async fn topic_stats(&mut self, topic: String) -> TopicStats {
+        let custom_header = Some(GetTopicStatsInfoHeader::new(topic));
+        let command = RemotingCommand::build(RequestCode::GetTOpicStatsInfo, custom_header);
+        let conn = self.broker_connections.get_mut(0).unwrap();
+        let response = conn.send_request(command).await.unwrap();
+        TopicStats::parse(response.body().to_string())
     }
 }

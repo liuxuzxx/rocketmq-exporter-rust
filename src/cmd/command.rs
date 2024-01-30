@@ -489,6 +489,9 @@ pub trait CustomHeader {
     fn encode(&self) -> HashMap<String, String>;
 }
 
+const TOPIC: &str = "topic";
+///
+/// 获取RocketMQ的Topic路由信息的头部
 pub struct TopicRouteInfoRequestHeader {
     topic: String,
 }
@@ -496,7 +499,7 @@ pub struct TopicRouteInfoRequestHeader {
 impl CustomHeader for TopicRouteInfoRequestHeader {
     fn encode(&self) -> HashMap<String, String> {
         let mut data = HashMap::new();
-        data.insert(String::from("topic"), self.topic.clone());
+        data.insert(TOPIC.to_string(), self.topic.clone());
         data
     }
 }
@@ -504,5 +507,25 @@ impl CustomHeader for TopicRouteInfoRequestHeader {
 impl TopicRouteInfoRequestHeader {
     pub fn new(topic: String) -> TopicRouteInfoRequestHeader {
         TopicRouteInfoRequestHeader { topic: topic }
+    }
+}
+
+///
+/// 获取Topic的状态的头部
+pub struct GetTopicStatsInfoHeader {
+    topic: String,
+}
+
+impl CustomHeader for GetTopicStatsInfoHeader {
+    fn encode(&self) -> HashMap<String, String> {
+        let mut data = HashMap::new();
+        data.insert(TOPIC.to_string(), self.topic.clone());
+        data
+    }
+}
+
+impl GetTopicStatsInfoHeader {
+    pub fn new(topic: String) -> GetTopicStatsInfoHeader {
+        GetTopicStatsInfoHeader { topic: topic }
     }
 }

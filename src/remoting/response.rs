@@ -4,7 +4,7 @@ use std::{
     vec,
 };
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::util::json::Tokenizer;
 
@@ -102,5 +102,77 @@ impl Topics {
 
     pub fn topics(&self) -> &Vec<String> {
         &self.topic_list
+    }
+}
+
+#[derive(Deserialize, Debug, Serialize)]
+pub struct TopicStats {
+    #[serde(rename = "offsetTable")]
+    offset_table: HashMap<MessageQueue, TopicOffset>,
+}
+
+impl TopicStats {
+    pub fn parse(source: String) -> TopicStats {
+        serde_json::from_str(&source.as_str()).unwrap()
+    }
+}
+
+#[derive(Deserialize, Debug, Hash, Serialize)]
+struct MessageQueue {
+    #[serde(rename = "brokerName")]
+    broker_name: String,
+    #[serde(rename = "queueId")]
+    queue_id: i32,
+    topic: String,
+}
+
+impl PartialEq for MessageQueue {
+    fn eq(&self, other: &Self) -> bool {
+        self.broker_name.eq(&other.broker_name)
+            && self.queue_id.eq(&other.queue_id)
+            && self.topic.eq(&other.topic)
+    }
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
+    }
+}
+
+impl Eq for MessageQueue {}
+
+#[derive(Deserialize, Debug, Serialize)]
+struct TopicOffset {
+    #[serde(rename = "minOffset")]
+    min_offset: i64,
+    #[serde(rename = "maxOffset")]
+    max_offset: i64,
+    #[serde(rename = "lastUpdateTimestamp")]
+    last_update_timestamp: i64,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_serialize_complex_hashmap() {
+        let mut offset_table = HashMap::new();
+        let message_queue = MessageQueue {
+            broker_name: "broker-a".to_string(),
+            queue_id: 8,
+            topic: "prod_CPAAS_CHANNEL_EVENT".to_string(),
+        };
+        let topic_offset = TopicOffset {
+            min_offset: 90,
+            max_offset: 1293,
+            last_update_timestamp: 888234,
+        };
+
+        offset_table.insert(message_queue, topic_offset);
+
+        let topic_stats = TopicStats {
+            offset_table: offset_table,
+        };
+        let json = serde_json::to_string(&topic_stats).unwrap();
+        println!("序列化之后的字符串:{json}");
     }
 }

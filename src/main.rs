@@ -23,4 +23,9 @@ async fn rocketmq_metrics() {
         let route_reponse = client.topic_route(topic.clone()).await;
         println!("Topic:{} route:{:?}", topic, route_reponse);
     }
+
+    for topic in topics {
+        let response = client.topic_stats(topic.clone()).await;
+        println!("Topic:{} stats:{:?}", topic, response);
+    }
 }
