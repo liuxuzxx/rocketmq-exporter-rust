@@ -1,10 +1,10 @@
 use std::{
     collections::{HashMap, HashSet},
-    path::MAIN_SEPARATOR,
     vec,
 };
 
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::util::json::Tokenizer;
 
@@ -105,7 +105,7 @@ impl Topics {
     }
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct TopicStats {
     #[serde(rename = "offsetTable")]
     offset_table: HashMap<MessageQueue, TopicOffset>,
@@ -117,11 +117,22 @@ impl TopicStats {
     }
 }
 
-#[derive(Deserialize, Debug, Hash, Serialize)]
+impl<'de> Deserialize<'de> for TopicStats {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?;
+        println!("查看读取的Value:{:?}", value);
+        Ok(Self {
+            offset_table: HashMap::new(),
+        })
+    }
+}
+
+#[derive(Debug, Hash)]
 struct MessageQueue {
-    #[serde(rename = "brokerName")]
     broker_name: String,
-    #[serde(rename = "queueId")]
     queue_id: i32,
     topic: String,
 }
@@ -138,6 +149,34 @@ impl PartialEq for MessageQueue {
 }
 
 impl Eq for MessageQueue {}
+
+///
+/// 实现单独的序列化接口
+impl Serialize for MessageQueue {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let json = format!("{}-{}-{}", self.broker_name, self.queue_id, self.topic);
+        serializer.serialize_str(&json)
+    }
+}
+
+impl<'de> Deserialize<'de> for MessageQueue {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let data = <&str>::deserialize(deserializer)?;
+
+        println!("查看接收到的字符串:{data}");
+        Ok(Self {
+            broker_name: "test".to_string(),
+            queue_id: 1,
+            topic: "prod_test".to_string(),
+        })
+    }
+}
 
 #[derive(Deserialize, Debug, Serialize)]
 struct TopicOffset {

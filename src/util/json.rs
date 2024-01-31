@@ -1,7 +1,3 @@
-use std::fmt::Display;
-
-use serde_json::Number;
-
 #[derive(Debug)]
 pub enum TokenType {
     BeginObject(char),
@@ -176,7 +172,6 @@ impl Tokenizer {
                 }
             }
         }
-        json
     }
 }
 
@@ -213,5 +208,28 @@ mod tests {
         let mut tokenizer = Tokenizer::new(json.to_string());
         let result = tokenizer.regular_json();
         println!("打印Tokenizer:{:?} 规范后的JSON:{}", tokenizer, result);
+    }
+
+    #[test]
+    fn test_map_json() {
+        let json = r#"
+          {"offsetTable":
+          {
+            {
+                "brokerName":"broker-a",
+                "queueId":0,
+                "topic":"%RETRY%test_submit_68985_l4"
+            }:{
+                "lastUpdateTimestamp":0,
+                "maxOffset":0,
+                "minOffset":0
+            }
+          }
+          }
+        "#;
+
+        let mut tokenizer = Tokenizer::new(json.to_string());
+        tokenizer.parse();
+        println!("打印Tokenizer:{:?}", tokenizer.tokens)
     }
 }
