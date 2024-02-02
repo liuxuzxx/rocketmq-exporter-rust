@@ -210,6 +210,10 @@ impl ConsumerGroups {
     }
 }
 
+pub struct BrokerRuntimeInfo {}
+
+pub struct BrokerRuntimeInfoTable {}
+
 #[cfg(test)]
 mod tests {
     use super::*;

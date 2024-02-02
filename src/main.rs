@@ -39,4 +39,6 @@ async fn rocketmq_metrics() {
             println!("Topic:{topic} consumer-groups:{data:?}");
         }
     }
+
+    client.query_broker_runtime_info().await;
 }

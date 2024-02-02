@@ -114,4 +114,10 @@ impl Client {
             None
         }
     }
+
+    pub async fn query_broker_runtime_info(&mut self) {
+        let command = RemotingCommand::new(RequestCode::GetBrokerRuntimeInfo);
+        let conn = self.broker_connections.get_mut(0).unwrap();
+        let response = conn.send_request(command).await.unwrap();
+    }
 }
