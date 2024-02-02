@@ -3,12 +3,7 @@ use std::{
     vec,
 };
 
-use futures::stream::Iter;
-use serde::{
-    de::{self, Visitor},
-    Deserialize, Serialize,
-};
-use serde_json::Value;
+use serde::{Deserialize, Serialize};
 
 use crate::util::json::{TokenType, Tokenizer};
 
@@ -16,10 +11,9 @@ use crate::util::json::{TokenType, Tokenizer};
 /// RocketMQ的信息的Master的ID，是: 0
 const MASTER_KEY: i64 = 0;
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct BrokerInformation {
-    #[serde(rename = "brokerAddrTable")]
     broker_addr_table: HashMap<String, BrokerData>,
-    #[serde(rename = "clusterAddrTable")]
     cluster_addr_table: HashMap<String, HashSet<String>>,
 }
 
@@ -45,11 +39,10 @@ impl BrokerInformation {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct BrokerData {
     cluster: String,
-    #[serde(rename = "brokerName")]
     broker_name: String,
-    #[serde(rename = "brokerAddrs")]
     broker_addrs: HashMap<i64, String>,
 }
 
@@ -60,17 +53,13 @@ impl BrokerData {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct TopicRouteInformation {
-    #[serde(rename = "orderTopicConf", default)]
+    #[serde(default)]
     order_topic_conf: String,
-
-    #[serde(rename = "brokerDatas")]
     broker_datas: Vec<BrokerData>,
-
-    #[serde(rename = "filterServerTable", default)]
+    #[serde(default)]
     filter_server_table: HashMap<String, Vec<String>>,
-
-    #[serde(rename = "queueDatas")]
     queue_datas: Vec<QueueData>,
 }
 
@@ -81,15 +70,12 @@ impl TopicRouteInformation {
     }
 }
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct QueueData {
-    #[serde(rename = "brokerName")]
     broker_name: String,
-    #[serde(rename = "readQueueNums")]
     read_queue_nums: i32,
-    #[serde(rename = "writeQueueNums")]
     write_queue_nums: i32,
     perm: i32,
-    #[serde(rename = "topicSysFlag")]
     topic_sys_flag: i32,
 }
 
