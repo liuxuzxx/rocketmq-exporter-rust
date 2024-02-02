@@ -196,6 +196,20 @@ struct TopicOffset {
     last_update_timestamp: i64,
 }
 
+///
+/// Topic的消费者组的列表对象
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConsumerGroups {
+    group_list: Vec<String>,
+}
+
+impl ConsumerGroups {
+    pub fn parse(source: String) -> ConsumerGroups {
+        serde_json::from_str(&source).unwrap()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

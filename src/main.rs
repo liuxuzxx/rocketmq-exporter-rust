@@ -32,4 +32,11 @@ async fn rocketmq_metrics() {
             println!("Topic:{topic} stats:{data:?}");
         }
     }
+
+    for topic in topics {
+        let result = client.query_topic_consume_by_who(topic.clone()).await;
+        if let Some(data) = result {
+            println!("Topic:{topic} consumer-groups:{data:?}");
+        }
+    }
 }

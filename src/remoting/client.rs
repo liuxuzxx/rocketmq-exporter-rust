@@ -2,9 +2,15 @@ use std::{f32::consts::E, io::Error};
 
 use tokio::net::{TcpStream, ToSocketAddrs};
 
-use crate::cmd::{
-    command::RemotingCommand,
-    command::{GetTopicStatsInfoHeader, RequestCode, TopicRouteInfoRequestHeader},
+use crate::{
+    cmd::{
+        command::RemotingCommand,
+        command::{
+            CustomHeader, GetTopicStatsInfoHeader, RequestCode, TopicConsumerByWhoHeader,
+            TopicRouteInfoRequestHeader,
+        },
+    },
+    remoting::response::ConsumerGroups,
 };
 
 use super::{
@@ -90,6 +96,20 @@ impl Client {
         let response = conn.send_request(command).await.unwrap();
         if response.is_success() {
             Some(TopicStats::parse(response.body().to_string()))
+        } else {
+            None
+        }
+    }
+
+    ///
+    /// 获取Topic被哪些消费者消费了
+    pub async fn query_topic_consume_by_who(&mut self, topic: String) -> Option<ConsumerGroups> {
+        let custom_header = Some(TopicConsumerByWhoHeader::new(topic));
+        let command = RemotingCommand::build(RequestCode::QueryTopicConsumeByWho, custom_header);
+        let conn = self.broker_connections.get_mut(0).unwrap();
+        let response = conn.send_request(command).await.unwrap();
+        if response.is_success() {
+            Some(ConsumerGroups::parse(response.body().to_string()))
         } else {
             None
         }

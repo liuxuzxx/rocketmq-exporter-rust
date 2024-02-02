@@ -564,3 +564,23 @@ impl GetTopicStatsInfoHeader {
         GetTopicStatsInfoHeader { topic: topic }
     }
 }
+
+///
+/// 查找Topic被哪些消费者消费了
+pub struct TopicConsumerByWhoHeader {
+    topic: String,
+}
+
+impl CustomHeader for TopicConsumerByWhoHeader {
+    fn encode(&self) -> HashMap<String, String> {
+        let mut data = HashMap::new();
+        data.insert(TOPIC.to_string(), self.topic.clone());
+        data
+    }
+}
+
+impl TopicConsumerByWhoHeader {
+    pub fn new(topic: String) -> TopicConsumerByWhoHeader {
+        TopicConsumerByWhoHeader { topic: topic }
+    }
+}
