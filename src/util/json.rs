@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TokenType {
     BeginObject(char),
     EndObject(char),
@@ -29,7 +29,11 @@ impl Tokenizer {
         }
     }
 
-    fn parse(&mut self) {
+    pub fn tokens(&self) -> &Vec<TokenType> {
+        &self.tokens
+    }
+
+    pub fn parse(&mut self) {
         let chars = self.source.chars();
         let mut iter = chars.enumerate();
 
@@ -104,8 +108,12 @@ impl Tokenizer {
     /// 正规化JSON，采用解析JSON的方案来处理
     pub fn regular_json(&mut self) -> String {
         self.parse();
+        Self::do_regular_json(&mut self.tokens)
+    }
+
+    pub fn do_regular_json(tokens: &Vec<TokenType>) -> String {
         let mut json = String::from("");
-        let mut iter = self.tokens.iter();
+        let mut iter = tokens.iter();
         loop {
             match iter.next() {
                 Some(t) => match t {
@@ -230,6 +238,6 @@ mod tests {
 
         let mut tokenizer = Tokenizer::new(json.to_string());
         tokenizer.parse();
-        println!("打印Tokenizer:{:?}", tokenizer.tokens)
+        println!("打印Tokenizer:{:?}", tokenizer.tokens);
     }
 }

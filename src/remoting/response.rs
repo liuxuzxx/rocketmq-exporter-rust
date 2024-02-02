@@ -3,10 +3,14 @@ use std::{
     vec,
 };
 
-use serde::{de, Deserialize, Serialize};
+use futures::stream::Iter;
+use serde::{
+    de::{self, Visitor},
+    Deserialize, Serialize,
+};
 use serde_json::Value;
 
-use crate::util::json::Tokenizer;
+use crate::util::json::{TokenType, Tokenizer};
 
 ///
 /// RocketMQ的信息的Master的ID，是: 0
@@ -105,37 +109,87 @@ impl Topics {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct TopicStats {
-    #[serde(rename = "offsetTable")]
     offset_table: HashMap<MessageQueue, TopicOffset>,
 }
 
 impl TopicStats {
     pub fn parse(source: String) -> TopicStats {
-        serde_json::from_str(&source.as_str()).unwrap()
+        TopicStats {
+            offset_table: Self::do_parse(source),
+        }
+    }
+
+    fn do_parse(source: String) -> HashMap<MessageQueue, TopicOffset> {
+        let mut tokenizer = Tokenizer::new(source);
+        tokenizer.parse();
+        let tokens = tokenizer.tokens();
+        let offset_table = &tokens[4..tokens.len() - 3];
+        let mut iter = offset_table.iter();
+        let mut obj_vec = vec![];
+        loop {
+            match iter.next() {
+                Some(token_type) => match token_type {
+                    TokenType::BeginObject(c) => {
+                        let mut obj_token_type = vec![];
+                        obj_token_type.push(token_type.clone());
+                        loop {
+                            match iter.next() {
+                                Some(obj_type) => match obj_type {
+                                    TokenType::EndObject(oc) => {
+                                        obj_token_type.push(obj_type.clone());
+                                        obj_vec.push(obj_token_type);
+                                        break;
+                                    }
+                                    _ => {
+                                        obj_token_type.push(obj_type.clone());
+                                    }
+                                },
+                                None => {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                },
+                None => {
+                    break;
+                }
+            }
+        }
+
+        let mut iter = obj_vec.iter().enumerate();
+        let mut data_map = HashMap::new();
+        loop {
+            match iter.next() {
+                Some((_, v)) => {
+                    let json = Tokenizer::do_regular_json(v);
+                    let message_queue: MessageQueue = serde_json::from_str(json.as_str()).unwrap();
+                    let (_, t) = iter.next().unwrap();
+                    let topic_offset: TopicOffset =
+                        serde_json::from_str(Tokenizer::do_regular_json(t).as_str()).unwrap();
+                    data_map.insert(message_queue, topic_offset);
+                }
+                None => {
+                    break;
+                }
+            }
+        }
+        data_map
     }
 }
 
-impl<'de> Deserialize<'de> for TopicStats {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let value = String::deserialize(deserializer)?;
-        println!("查看读取的Value:{:?}", value);
-        Ok(Self {
-            offset_table: HashMap::new(),
-        })
-    }
-}
-
-#[derive(Debug, Hash)]
+#[derive(Debug, Deserialize, Hash)]
+#[serde(rename_all = "camelCase")]
 struct MessageQueue {
     broker_name: String,
     queue_id: i32,
     topic: String,
 }
+
+impl Eq for MessageQueue {}
 
 impl PartialEq for MessageQueue {
     fn eq(&self, other: &Self) -> bool {
@@ -148,43 +202,11 @@ impl PartialEq for MessageQueue {
     }
 }
 
-impl Eq for MessageQueue {}
-
-///
-/// 实现单独的序列化接口
-impl Serialize for MessageQueue {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let json = format!("{}-{}-{}", self.broker_name, self.queue_id, self.topic);
-        serializer.serialize_str(&json)
-    }
-}
-
-impl<'de> Deserialize<'de> for MessageQueue {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let data = <&str>::deserialize(deserializer)?;
-
-        println!("查看接收到的字符串:{data}");
-        Ok(Self {
-            broker_name: "test".to_string(),
-            queue_id: 1,
-            topic: "prod_test".to_string(),
-        })
-    }
-}
-
 #[derive(Deserialize, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 struct TopicOffset {
-    #[serde(rename = "minOffset")]
     min_offset: i64,
-    #[serde(rename = "maxOffset")]
     max_offset: i64,
-    #[serde(rename = "lastUpdateTimestamp")]
     last_update_timestamp: i64,
 }
 
@@ -194,24 +216,21 @@ mod tests {
 
     #[test]
     fn test_serialize_complex_hashmap() {
-        let mut offset_table = HashMap::new();
-        let message_queue = MessageQueue {
-            broker_name: "broker-a".to_string(),
-            queue_id: 8,
-            topic: "prod_CPAAS_CHANNEL_EVENT".to_string(),
-        };
-        let topic_offset = TopicOffset {
-            min_offset: 90,
-            max_offset: 1293,
-            last_update_timestamp: 888234,
-        };
+        let json = r#"
+          {"offsetTable":
+          {
+            {
+                "brokerName":"broker-a",
+                "queueId":0,
+                "topic":"%RETRY%test_submit_68985_l4"
+            }:{
+                "lastUpdateTimestamp":0,
+                "maxOffset":0,
+                "minOffset":0}
+          }
+          }
+        "#;
 
-        offset_table.insert(message_queue, topic_offset);
-
-        let topic_stats = TopicStats {
-            offset_table: offset_table,
-        };
-        let json = serde_json::to_string(&topic_stats).unwrap();
-        println!("序列化之后的字符串:{json}");
+        let topic_stats = TopicStats::parse(json.to_string());
     }
 }
