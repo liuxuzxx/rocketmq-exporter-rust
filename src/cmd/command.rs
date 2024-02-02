@@ -22,12 +22,9 @@ impl RemotingCommand {
     pub fn parse(content: &BytesMut) -> RemotingCommand {
         let mut buf = Cursor::new(&content[..]);
         let length = content.len() as i32;
-        println!("content length:{}", length);
 
         let origin_header_length = buf.get_i32();
-        println!("origin header length:{}", origin_header_length);
         let header_length = origin_header_length & 0xFFFFFF;
-        println!("header length:{}", header_length);
 
         let mut header_data = vec![0u8; header_length as usize];
         buf.read(&mut header_data).unwrap();
@@ -75,6 +72,11 @@ impl RemotingCommand {
 
     pub fn body(&self) -> &str {
         &self.body
+    }
+
+    pub fn is_success(&self) -> bool {
+        let response_code = ResponseCode::Success;
+        self.header.code == response_code.code()
     }
 }
 
@@ -421,6 +423,39 @@ impl Serialize for RequestCode {
         S: serde::Serializer,
     {
         serializer.serialize_i32(self.code())
+    }
+}
+
+///
+/// RocketMQ的response的Code的枚举类型
+pub enum ResponseCode {
+    Success,
+    SystemError,
+    SystemBusy,
+    RequestCodeNotSupported,
+    TransactionFailed,
+}
+
+impl ResponseCode {
+    pub fn from_code(code: i32) -> ResponseCode {
+        match code {
+            0 => ResponseCode::Success,
+            1 => ResponseCode::SystemError,
+            2 => ResponseCode::SystemBusy,
+            3 => ResponseCode::RequestCodeNotSupported,
+            4 => ResponseCode::TransactionFailed,
+            _ => ResponseCode::SystemError,
+        }
+    }
+
+    pub fn code(&self) -> i32 {
+        match *self {
+            ResponseCode::Success => 0,
+            ResponseCode::SystemError => 1,
+            ResponseCode::SystemBusy => 2,
+            ResponseCode::RequestCodeNotSupported => 3,
+            ResponseCode::TransactionFailed => 4,
+        }
     }
 }
 

@@ -21,11 +21,15 @@ async fn rocketmq_metrics() {
     let topics = response.topics();
     for topic in topics {
         let route_reponse = client.topic_route(topic.clone()).await;
-        println!("Topic:{} route:{:?}", topic, route_reponse);
+        if let Some(response) = route_reponse {
+            println!("Topic:{topic},response:{response:?}");
+        }
     }
 
     for topic in topics {
         let response = client.topic_stats(topic.clone()).await;
-        println!("Topic:{} stats:{:?}", topic, response);
+        if let Some(data) = response {
+            println!("Topic:{topic} stats:{data:?}");
+        }
     }
 }

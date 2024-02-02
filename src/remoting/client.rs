@@ -1,4 +1,4 @@
-use std::io::Error;
+use std::{f32::consts::E, io::Error};
 
 use tokio::net::{TcpStream, ToSocketAddrs};
 
@@ -69,21 +69,29 @@ impl Client {
     ///
     /// 获取Topic的Route信息
     ///
-    pub async fn topic_route(&mut self, topic: String) -> TopicRouteInformation {
+    pub async fn topic_route(&mut self, topic: String) -> Option<TopicRouteInformation> {
         let custom_header = TopicRouteInfoRequestHeader::new(topic);
         let custom_header = Some(custom_header);
         let command = RemotingCommand::build(RequestCode::GetRouteInfoByTopic, custom_header);
         let data = self.connection.send_request(command).await.unwrap();
-        TopicRouteInformation::parse(data.body().to_string())
+        if data.is_success() {
+            Some(TopicRouteInformation::parse(data.body().to_string()))
+        } else {
+            None
+        }
     }
 
     ///
     /// 获取Topic的stats统计信息
-    pub async fn topic_stats(&mut self, topic: String) -> TopicStats {
+    pub async fn topic_stats(&mut self, topic: String) -> Option<TopicStats> {
         let custom_header = Some(GetTopicStatsInfoHeader::new(topic));
         let command = RemotingCommand::build(RequestCode::GetTOpicStatsInfo, custom_header);
         let conn = self.broker_connections.get_mut(0).unwrap();
         let response = conn.send_request(command).await.unwrap();
-        TopicStats::parse(response.body().to_string())
+        if response.is_success() {
+            Some(TopicStats::parse(response.body().to_string()))
+        } else {
+            None
+        }
     }
 }
