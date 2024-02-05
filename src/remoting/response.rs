@@ -3,7 +3,7 @@ use std::{
     vec,
 };
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::util::json::{TokenType, Tokenizer};
 
@@ -210,9 +210,84 @@ impl ConsumerGroups {
     }
 }
 
-pub struct BrokerRuntimeInfo {}
+#[derive(Debug, Deserialize)]
+pub struct BrokerRuntimeInfo {
+    table: BrokerRuntimeInfoTable,
+}
 
-pub struct BrokerRuntimeInfoTable {}
+impl BrokerRuntimeInfo {
+    pub fn from(source: String) -> BrokerRuntimeInfo {
+        serde_json::from_str(&source).unwrap()
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BrokerRuntimeInfoTable {
+    msg_put_total_today_now: String,
+
+    #[serde(rename = "scheduleMessageOffset_2")]
+    schedule_message_offset_2: String,
+
+    #[serde(rename = "scheduleMessageOffset_3")]
+    schedule_message_offset_3: String,
+
+    #[serde(rename = "sendThreadPoolQueueHeadWaitTimeMills")]
+    send_thread_pool_queue_head_wait_time_mills: String,
+
+    #[serde(rename = "putMessageDistributeTime")]
+    put_message_distribute_time: String,
+
+    #[serde(rename = "scheduleMessageOffset_9")]
+    schedule_message_offset_9: String,
+
+    #[serde(rename = "scheduleMessageOffset_4")]
+    schedule_message_offset_4: String,
+
+    #[serde(rename = "scheduleMssageOffset_5")]
+    schedule_message_offset_5: String,
+
+    #[serde(rename = "queryThreadPoolQueueHeadWaitTimeMills")]
+    query_thread_pool_queue_head_wait_time_mills: String,
+
+    #[serde(rename = "scheduleMessageOffset_7")]
+    schedule_message_offset_7: String,
+
+    #[serde(rename = "scheduleMessageOffset_6")]
+    schedule_message_offset_6: String,
+
+    #[serde(rename = "remainHowManyDataToFlush")]
+    remain_how_many_data_to_flush: String,
+
+    #[serde(rename = "msgGetTotalTodayNow")]
+    msg_get_total_today_now: String,
+
+    #[serde(rename = "queryThreadPoolQueueSize")]
+    query_thread_pool_queue_size: String,
+
+    #[serde(rename = "bootTimestamp")]
+    boot_timestamp: String,
+
+    #[serde(rename = "msgPutTotalYesterdayMorning")]
+    msg_put_total_yesterday_morning: String,
+
+    #[serde(rename = "msgGetTotalYesterdayMorning")]
+    msg_get_total_yesterday_morning: String,
+
+    #[serde(rename = "pullThreadPoolQueueSize")]
+    pull_thread_pool_queue_size: String,
+
+    #[serde(rename = "commitLogMinOffset")]
+    commit_log_min_offset: String,
+
+    #[serde(rename = "pullThreadPoolQueueHeadWaitTimeMills")]
+    pull_thread_pool_queue_head_wait_time_mills: String,
+
+    runtime: String,
+
+    #[serde(rename = "dispatchMaxBuffer")]
+    dispatch_max_buffer: String,
+}
 
 #[cfg(test)]
 mod tests {
@@ -236,5 +311,79 @@ mod tests {
         "#;
 
         let topic_stats = TopicStats::parse(json.to_string());
+    }
+
+    #[test]
+    fn test_deserialize_broker_runtime_stats_information() {
+        let json = r#"
+        {
+  "table": {
+    "msgPutTotalTodayNow": "202317086",
+    "scheduleMessageOffset_2": "330248,13302481",
+    "scheduleMessageOffset_3": "4368076,4368076",
+    "scheduleMessageOffset_8": "1663953,1663953",
+    "sendThreadPoolQueueHeadWaitTimeMills": "0",
+    "putMessageDistributeTime": "[<=0ms]:0 [0~10ms]:0 [10~50ms]:0 [50~100ms]:0 [100~200ms]:0 [200~500ms]:0 [500ms~1s]:0 [1~2s]:0 [2~3s]:0 [3~4s]:0 [4~5s]:0 [5~10s]:0 [10s~]:0 ",
+    "scheduleMessageOffset_9": "1161283,1161283",
+    "scheduleMessageOffset_4": "4356130,4356130",
+    "scheduleMessageOffset_5": "1887886,1887886",
+    "queryThreadPoolQueueHeadWaitTimeMills": "0",
+    "scheduleMessageOffset_6": "4341108,4341108",
+    "scheduleMessageOffset_7": "4339088,4339088",
+    "remainHowManyDataToFlush": "0 B",
+    "msgGetTotalTodayNow": "203198287",
+    "queryThreadPoolQueueSize": "0",
+    "bootTimestamp": "1704677028015",
+    "msgPutTotalYesterdayMorning": "202316882",
+    "msgGetTotalYesterdayMorning": "203198185",
+    "pullThreadPoolQueueSize": "0",
+    "commitLogMinOffset": "169651208192",
+    "pullThreadPoolQueueHeadWaitTimeMills": "0",
+    "runtime": "[ 25 days, 8 hours, 53 minutes, 19 seconds ]",
+    "dispatchMaxBuffer": "0",
+    "brokerVersion": "397",
+    "putTps": "0.0 0.0 0.0",
+    "getMissTps": "98.79012098790122 123.2876712328767 121.89155048345326",
+    "getTransferedTps": "0.0 0.0 0.0",
+    "EndTransactionQueueSize": "0",
+    "getTotalTps": "98.79012098790122 123.2876712328767 121.89155048345326",
+    "scheduleMessageOffset_11": "1074572,1074572",
+    "scheduleMessageOffset_12": "974605,974605",
+    "scheduleMessageOffset_13": "781935,781935",
+    "consumeQueueDiskRatio": "0.08",
+    "scheduleMessageOffset_14": "738865,738865",
+    "scheduleMessageOffset_10": "1095418,1095418",
+    "pageCacheLockTimeMills": "0",
+    "commitLogDiskRatio": "0.08",
+    "getFoundTps": "0.0 0.0 0.0",
+    "scheduleMessageOffset_15": "738864,738864",
+    "scheduleMessageOffset_16": "738861,738861",
+    "scheduleMessageOffset_17": "502813,502813",
+    "scheduleMessageOffset_18": "107,107",
+    "EndTransactionThreadPoolQueueCapacity": "100000",
+    "commitLogDiskRatio_/home/soft/rocketmq-4.9.2_0905/store/commitlog": "0.08",
+    "commitLogMaxOffset": "169891684804",
+    "getMessageEntireTimeMax": "26",
+    "msgPutTotalTodayMorning": "202317086",
+    "putMessageTimesTotal": "202317086",
+    "msgGetTotalTodayMorning": "203198287",
+    "brokerVersionDesc": "V4_9_2",
+    "sendThreadPoolQueueSize": "0",
+    "startAcceptSendRequestTimeStamp": "0",
+    "putMessageEntireTimeMax": "37",
+    "earliestMessageTimeStamp": "1706162317012",
+    "commitLogDirCapacity": "Total : 299.3 GiB, Free : 276.1 GiB.",
+    "remainTransientStoreBufferNumbs": "2147483647",
+    "queryThreadPoolQueueCapacity": "20000",
+    "putMessageAverageSize": "786.4522811632429",
+    "dispatchBehindBytes": "0",
+    "putMessageSizeTotal": "159112733803",
+    "sendThreadPoolQueueCapacity": "10000",
+    "pullThreadPoolQueueCapacity": "100000"
+  }
+}
+        "#;
+
+        BrokerRuntimeInfo::from(json.to_string());
     }
 }

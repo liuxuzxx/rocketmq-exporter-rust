@@ -39,7 +39,7 @@ impl Tokenizer {
 
         loop {
             match iter.next() {
-                Some((i, c)) => match c {
+                Some((_i, c)) => match c {
                     '{' => self.tokens.push(TokenType::BeginObject('{')),
                     '}' => self.tokens.push(TokenType::EndObject('}')),
                     '[' => self.tokens.push(TokenType::BeginArray('[')),
@@ -69,7 +69,7 @@ impl Tokenizer {
         let mut value = String::from("");
         loop {
             match iter.next() {
-                Some((i, c)) => match c {
+                Some((_i, c)) => match c {
                     '"' => return TokenType::StringValue(value),
                     _ => value.push(c),
                 },
@@ -89,7 +89,7 @@ impl Tokenizer {
         value.push(first);
         loop {
             match iter.next() {
-                Some((i, c)) => match c {
+                Some((_i, c)) => match c {
                     '0'..='9' => value.push(c),
                     ':' => return (TokenType::Number(value), TokenType::SepColon(c)),
                     ',' => return (TokenType::Number(value), TokenType::SepComma(c)),
