@@ -224,6 +224,7 @@ impl BrokerRuntimeInfo {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BrokerRuntimeInfoTable {
+    #[serde(rename = "msgPutTotalTodayNow")]
     msg_put_total_today_now: String,
 
     #[serde(rename = "scheduleMessageOffset_2")]
@@ -244,7 +245,7 @@ pub struct BrokerRuntimeInfoTable {
     #[serde(rename = "scheduleMessageOffset_4")]
     schedule_message_offset_4: String,
 
-    #[serde(rename = "scheduleMssageOffset_5")]
+    #[serde(rename = "scheduleMessageOffset_5")]
     schedule_message_offset_5: String,
 
     #[serde(rename = "queryThreadPoolQueueHeadWaitTimeMills")]
@@ -287,6 +288,105 @@ pub struct BrokerRuntimeInfoTable {
 
     #[serde(rename = "dispatchMaxBuffer")]
     dispatch_max_buffer: String,
+
+    #[serde(rename = "brokerVersion")]
+    broker_version: String,
+
+    #[serde(rename = "putTps")]
+    put_tps: String,
+
+    #[serde(rename = "getMissTps")]
+    get_miss_tps: String,
+
+    #[serde(rename = "getTransferedTps")]
+    get_transfered_tps: String,
+
+    #[serde(rename = "EndTransactionQueueSize")]
+    end_transaction_queue_size: String,
+
+    #[serde(rename = "getTotalTps")]
+    get_total_tps: String,
+
+    #[serde(rename = "scheduleMessageOffset_11")]
+    schedule_message_offset_11: String,
+
+    #[serde(rename = "scheduleMessageOffset_12")]
+    schedule_message_offset_12: String,
+
+    #[serde(rename = "scheduleMessageOffset_13")]
+    schedule_message_offset_13: String,
+
+    #[serde(rename = "consumeQueueDiskRatio")]
+    consume_queue_disk_ratio: String,
+
+    #[serde(rename = "getFoundTps")]
+    get_found_tps: String,
+
+    #[serde(rename = "scheduleMessageOffset_16")]
+    schedule_message_offset_16: String,
+
+    #[serde(rename = "scheduleMessageOffset_17")]
+    schedule_message_offset_17: String,
+
+    #[serde(rename = "scheduleMessageOffset_18")]
+    schedule_message_offset_18: String,
+
+    #[serde(rename = "EndTransactionThreadPoolQueueCapacity")]
+    end_transaction_thread_pool_queue_capacity: String,
+
+    #[serde(rename = "commitLogMaxOffset")]
+    commit_log_max_offset: String,
+
+    #[serde(rename = "getMessageEntireTimeMax")]
+    get_message_entire_time_max: String,
+
+    #[serde(rename = "msgPutTotalTodayMorning")]
+    msg_put_total_today_morning: String,
+
+    #[serde(rename = "putMessageTimesTotal")]
+    put_message_times_total: String,
+
+    #[serde(rename = "msgGetTotalTodayMorning")]
+    msg_get_total_today_morning: String,
+
+    #[serde(rename = "brokerVersionDesc")]
+    broker_version_desc: String,
+
+    #[serde(rename = "sendThreadPoolQueueSize")]
+    send_thread_pool_queue_size: String,
+
+    #[serde(rename = "startAcceptSendRequestTimeStamp")]
+    start_accept_send_request_time_stamp: String,
+
+    #[serde(rename = "putMessageEntireTimeMax")]
+    put_message_entire_time_max: String,
+
+    #[serde(rename = "earliestMessageTimeStamp")]
+    earliest_message_time_stamp: String,
+
+    #[serde(rename = "commitLogDirCapacity")]
+    commit_log_dir_capacity: String,
+
+    #[serde(rename = "remainTransientStoreBufferNumbs")]
+    remain_transient_store_buffer_numbs: String,
+
+    #[serde(rename = "queryThreadPoolQueueCapacity")]
+    query_thread_pool_queue_capacity: String,
+
+    #[serde(rename = "putMessageAverageSize")]
+    put_message_average_size: String,
+
+    #[serde(rename = "dispatchBehindBytes")]
+    dispatch_behind_bytes: String,
+
+    #[serde(rename = "putMessageSizeTotal")]
+    put_messgae_size_total: String,
+
+    #[serde(rename = "sendThreadPoolQueueCapacity")]
+    send_thread_pool_queue_capacity: String,
+
+    #[serde(rename = "pullThreadPoolQueueCapacity")]
+    pull_thread_pool_queue_capacity: String,
 }
 
 #[cfg(test)]
