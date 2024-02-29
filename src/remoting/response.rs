@@ -389,6 +389,17 @@ pub struct BrokerRuntimeInfoTable {
     pull_thread_pool_queue_capacity: String,
 }
 
+pub fn split_two_to_i64(source: String) -> (i64, i64) {
+    let elements: Vec<&str> = source.split(',').collect();
+
+    if elements.len() != 2 {
+        return (-1, -1);
+    }
+    let first = elements.get(0).unwrap().parse::<i64>().unwrap();
+    let second = elements.get(1).unwrap().parse::<i64>().unwrap();
+    (first, second)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
